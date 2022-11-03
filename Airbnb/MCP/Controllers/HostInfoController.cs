@@ -1,0 +1,44 @@
+﻿using Airbnb.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Web.Http;
+
+namespace Airbnb.Controllers
+{
+    //Host controller
+    public class HostInfoController : ApiController
+    {
+        [HttpGet]
+        [Route("api/HostInfo/Getinfo")]
+        //Routing for Getinfo
+        public List<HostInfo> Get()
+        {
+            HostInfo hi = new HostInfo();
+            return hi.GetInfo();
+        }
+
+        // GET api/<controller>/5
+        public string Get(int id)
+        {
+            return "value";
+        }
+
+        // POST api/<controller>
+        public void Post([FromBody]string value)
+        {
+        }
+
+        // PUT api/<controller>/5
+        public void Put(int id, [FromBody]string value)
+        {
+        }
+
+        // DELETE api/<controller>/5
+        public void Delete(int id)
+        {
+        }
+    }
+}

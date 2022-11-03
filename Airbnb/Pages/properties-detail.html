@@ -1,0 +1,743 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Home Property | Properties Details</title>
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="img/favicon.ico" type="image/x-icon">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <script src="../Scripts/ajaxCalls.js"></script>
+
+
+    <link href="../css/theme-color/default-theme.css" rel="stylesheet" />
+    <link href="../css/bootstrap.css" rel="stylesheet" />
+    <link href="../css/font-awesome.css" rel="stylesheet" />
+    <link href="../css/jquery.fancybox.css" rel="stylesheet" />
+    <style>
+        .deletebtn {
+            color: green;
+            width: 90px;
+            border-radius: 8px;
+            border-width: 0;
+        }
+    </style>
+    <link href="../css/nouislider.css" rel="stylesheet" />
+    <link href="../css/slick.css" rel="stylesheet" />
+    <!--<link href="../css/style.css" rel="stylesheet" />-->
+    <!-- Google Font -->
+    <link href='https://fonts.googleapis.com/css?family=Vollkorn' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://demos.jquerymobile.com/1.4.2/css/themes/default/jquery.mobile-1.4.2.min.css">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <script src="sweetalert2.min.js"></script>
+    <link rel="stylesheet" href="sweetalert2.min.css">
+    <script src="sweetalert2.all.min.js"></script>
+
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+
+        .Rcontainer {
+            border-style: solid;
+        }
+
+        #quote-carousel {
+            padding: 0 10px 30px 10px;
+            margin-top: 60px;
+        }
+
+            #quote-carousel .carousel-control {
+                background: none;
+                color: #CACACA;
+                font-size: 2.3em;
+                text-shadow: none;
+                margin-top: 30px;
+            }
+
+            #quote-carousel .carousel-indicators {
+                position: relative;
+                right: 50%;
+                top: auto;
+                bottom: 0px;
+                margin-top: 20px;
+                margin-right: -19px;
+            }
+
+                #quote-carousel .carousel-indicators li {
+                    width: 50px;
+                    height: 50px;
+                    cursor: pointer;
+                    border: 1px solid #ccc;
+                    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+                    border-radius: 50%;
+                    opacity: 0.4;
+                    overflow: hidden;
+                    transition: all .4s ease-in;
+                    vertical-align: middle;
+                }
+
+                #quote-carousel .carousel-indicators .active {
+                    width: 128px;
+                    height: 128px;
+                    opacity: 1;
+                    transition: all .2s;
+                }
+
+        .item blockquote {
+            border-left: none;
+            margin: 0;
+        }
+
+            .item blockquote p:before {
+                content: "\f10d";
+                font-family: 'Fontawesome';
+                float: left;
+                margin-right: 10px;
+            }
+    </style>
+
+    <script>
+        var apartment;
+        var id = JSON.parse(localStorage.getItem('id'));
+        var apartmentsToComp = [];
+        var apartmentsToCompCheckIn = [];
+        var apartmentsToCompCheckOut = [];
+
+
+
+        $(document).ready(function () {
+
+            buttons();
+            if (localStorage.getItem("search_status") == 'false') {
+                $('#book_sidebar').hide();
+            }
+            else {
+                $('#book_sidebar').show();
+            }
+            getApartment(id);
+            addReviews(id);
+            $('#booking_form').submit(addorder);
+
+            var btn1 = document.getElementById("comPage");
+            btn1.setAttribute("onclick", "move()");
+
+
+            var btn = document.getElementById("btnComp");
+            btn.setAttribute("onclick", "addToComp()");
+
+
+            //add review
+            $('#addreviewform').submit(function () {
+                let name = $('#revierName').val();
+                let description = $('#description').val();
+                let aptid = JSON.parse(localStorage.getItem('id'));
+                let todaydate = new Date();
+
+                let review = {
+                    ApartmentId: aptid,
+                    Date: todaydate,
+                    ReviewerName: name,
+                    Description: description
+                }
+
+                ajaxCall("POST", "../api/Reviews/GetReviews", JSON.stringify(review), addreviewsuccess, error)
+                return false;
+            });
+
+        });
+        function addreviewsuccess() {
+            swal("Thank You!", "Successfuly added Review", "success");
+        }
+        function buttons() { //Defining the buttons for redirecting between pages
+
+            $("#Ua").click(function () {
+                location.href = 'userArea.html';
+                return false;
+            });
+            $("#Pro").click(function () {
+                location.href = 'properties.html';
+                return false;
+            });
+            $("#Ac").click(function () {
+                location.href = 'comparison.html';
+                return false;
+            });
+            $("#LogOut").click(function () {
+                var myWindow = window.open("index.html", "ModalPopUp", "width=1000,height=1000");
+                var win = window.close();
+                return false;
+            });
+            $("#In").click(function () {
+                location.href = 'info.html';
+                return false;
+            });
+
+        }
+
+        function move() {
+            location.href = 'comparison.html';
+            return false;
+        }
+
+        // comparing between apartments
+        function addToComp() {
+
+            var tmp = localStorage.getItem("apartmentsToCompare");
+            if (tmp == null) {
+                apartmentsToComp = [];
+                apartmentsToCompCheckIn = [];
+                apartmentsToCompCheckOut = [];
+                localStorage.setItem("apartmentsToCompare", JSON.stringify(apartmentsToComp));
+                localStorage.setItem("apartmentsToCompCheckIn", JSON.stringify(apartmentsToCompCheckIn));
+                localStorage.setItem("apartmentsToCompCheckOut", JSON.stringify(apartmentsToCompCheckOut));
+            }
+
+            else {
+
+
+                apartmentsToComp = JSON.parse(localStorage.getItem("apartmentsToCompare"));
+                apartmentsToCompCheckIn = JSON.parse(localStorage.getItem("apartmentsToCompCheckIn"));
+                apartmentsToCompCheckOut = JSON.parse(localStorage.getItem("apartmentsToCompCheckOut"));
+
+            }
+
+            if (apartmentsToComp.length == 4) {
+                $('#btnComp').hide();
+                swal({ // this will open a dialouge
+                    title: "You cannot compare more than 4 apartments.",
+                    text: "",
+                    icon: "warning",
+                    buttons: true,
+                    dangerMode: true
+                });
+
+                return;
+
+            }
+
+            getApartmentForCompare(id);
+            //tmp = localStorage.getItem("apartmentsToCompare");
+
+
+        }
+
+        function getApartmentForCompare(id) {
+            //ajaxCall("DELETE", "../api/Companies/" + name, "", deleteSuccess, error)
+            $.ajax({
+                url: "../api/Apartments/GetApartment" + '?' + $.param({ 'id': id }),
+                type: 'Get',
+                success: successComp,
+                error: errorComp
+            });
+
+        }
+
+        function errorComp(data) {
+            alert('error');
+        }
+
+        function successComp(data) {
+            //apartmentsToComp = localStorage.getItem("apartmentsToCompare");
+            apartmentforCompare = data;
+            swal("Apartment added To Compare Page", "", "success");
+
+            apartmentsToComp.push(apartmentforCompare);
+
+            localStorage.setItem("apartmentsToCompare", JSON.stringify(apartmentsToComp));
+
+            checkIn = JSON.parse(localStorage.getItem("checkin"));
+            apartmentsToCompCheckIn.push(checkIn);
+            localStorage.setItem("apartmentsToCompCheckIn", JSON.stringify(apartmentsToCompCheckIn));
+
+            checkOut = JSON.parse(localStorage.getItem("checkout"));
+            apartmentsToCompCheckOut.push(checkOut);
+            localStorage.setItem("apartmentsToCompCheckOut", JSON.stringify(apartmentsToCompCheckOut))
+
+        }
+
+        function doReviews(reviews) {
+            var div1 = document.createElement("div");
+            div1.className = "item active";
+
+            var blockquote = document.createElement("blockquote");
+
+
+            var div2 = document.createElement("div");
+            div2.className = "row";
+
+            var div3 = document.createElement("div");
+            div3.className = "col-sm-8 col-sm-offset-2";
+
+            var p = document.createElement("p");
+            p.id = "idParagraph";
+            p.innerHTML = reviews[0].Description;
+            var small = document.createElement("small");
+            small.innerHTML = reviews[0].ReviewerName;
+            div3.appendChild(p);
+            div3.appendChild(small);
+            div2.appendChild(div3);
+            blockquote.appendChild(div2);
+            div1.appendChild(blockquote);
+            $("#reviewsDiv").append(div1);
+            for (let i = 1; i < reviews.length; i++) {
+                var div1 = document.createElement("div");
+                div1.className = "item";
+
+                var blockquote = document.createElement("blockquote");
+
+
+                var div2 = document.createElement("div");
+                div2.className = "row";
+
+                var div3 = document.createElement("div");
+                div3.className = "col-sm-8 col-sm-offset-2";
+
+                var p = document.createElement("p");
+                p.id = "idParagraph";
+                p.innerHTML = reviews[i].Description;
+                var small = document.createElement("small");
+                small.innerHTML = reviews[i].ReviewerName;
+                div3.appendChild(p);
+                div3.appendChild(small);
+                div2.appendChild(div3);
+                blockquote.appendChild(div2);
+                div1.appendChild(blockquote);
+                $("#reviewsDiv").append(div1);
+            }
+
+
+        }
+
+        function addReviews(id) {
+            $.ajax({
+                url: "../api/Reviews/GetReviews" + '?' + $.param({ 'id': id }),
+                type: 'Get',
+                success: successReview,
+                error: errorReview
+            });
+        }
+        function successReview(data) {
+            reviews = data;
+            doReviews(reviews);
+        }
+        function errorReview(data) {
+            alert('error');
+        }
+
+        function addorder() {
+
+            let email = localStorage.getItem("userEmail");
+            let aptName = localStorage.getItem("aptName");
+            let aptId = localStorage.getItem("id");
+            let since = JSON.parse(localStorage.getItem("checkin"));
+            let until = JSON.parse(localStorage.getItem("checkout"));           
+
+            let order = {
+                Mail: email,
+                ApartmentName: aptName,
+                ApartmentId: aptId,
+                Since: since,
+                Until: until
+
+            }
+            ajaxCall("POST", "../api/Orders/insertorder", JSON.stringify(order), addordersucsses, error)
+
+            return false;
+        }
+
+        function getApartment(id) {
+            $.ajax({
+                url: "../api/Apartments/GetApartment" + '?' + $.param({ 'id': id }),
+                type: 'Get',
+                success: success,
+                error: error
+            });
+
+        }
+        function showBookingDetails() {
+            $('#searched_cehckin').val(JSON.parse(localStorage.getItem('checkin')));
+            $('#searched_cehckout').val(JSON.parse(localStorage.getItem('checkout')));
+            $('#searched_price').val(apartment.Price + " $ per night");
+        }
+
+        function success(data) {
+            apartment = data;
+            initMap();
+            Do();
+            showBookingDetails();
+
+        }
+        function addordersucsses(flag) {
+            if (flag == 1) {
+                swal("Sorry", "There is another book at this range of time", "error");
+            }
+
+            else {
+                swal("Order Added!", "", "success");
+            }
+        }
+        function error(data) {
+            alert('there is conflict written from error');
+        }
+
+        function Do() {
+            var img1 = document.getElementById("img1");
+            img1.src = apartment.PicturePath;
+            var h2 = document.getElementById("name");
+            h2.innerHTML = apartment.Name;
+            var p = document.getElementById("p");
+            p.innerHTML = apartment.Description;
+            var span = document.getElementById("price");
+            span.innerHTML = apartment.Price;
+
+            var str = "";
+
+            for (let i = 0; i < apartment.Amenities.length; i++) {
+                str += "<li id='" + i + "'>" + apartment.Amenities[i] + "</li>\n";
+            }
+            document.getElementById("ul").innerHTML = str;
+
+
+        }
+
+        function initMap() {
+
+
+            //Getting the apartment's Longitude and Latitude
+            //apartment;
+            var lati = apartment.Latitude;
+            var longi = apartment.Longitude;
+
+            //Map options
+            var options = {
+                zoom: 12,
+                center: { lat: lati, lng: longi }
+            }
+            // New map
+            var map = new google.maps.Map(document.getElementById('map'), options);
+
+
+            var marker = new google.maps.Marker({
+                position: { lat: lati, lng: longi },
+                map: map,
+                icon: 'http://maps.google.com/mapfiles/kml/pal2/icon10.png'
+            });
+
+            var infoWindow = new google.maps.InfoWindow({
+                content: '<h3>' + apartment.Name + '</h3>'
+            });
+
+            marker.addListener('click', function () {
+                infoWindow.open(map, marker);
+            });
+
+            var marker2 = new google.maps.Marker({
+                position: { lat: 52.372822, lng: 4.893718 },
+                map: map
+            });
+
+            var infoWindow2 = new google.maps.InfoWindow({
+                content: '<h3>Dam Square</h3>'
+            });
+
+            marker2.addListener('click', function () {
+                infoWindow2.open(map, marker2);
+            });
+
+            var marker3 = new google.maps.Marker({
+                position: { lat: 52.3725874, lng: 4.8925872 },
+                map: map
+            });
+
+            var infoWindow3 = new google.maps.InfoWindow({
+                content: '<h3>Madame Tussauds</h3>'
+            });
+
+            marker3.addListener('click', function () {
+                infoWindow3.open(map, marker3);
+            });
+
+            var marker4 = new google.maps.Marker({
+                position: { lat: 52.3734085, lng: 4.8982738 },
+                map: map
+            });
+
+            var infoWindow4 = new google.maps.InfoWindow({
+                content: '<h3>Red Light District</h3>'
+            });
+
+            marker4.addListener('click', function () {
+                infoWindow4.open(map, marker4);
+            });
+
+            var marker5 = new google.maps.Marker({
+                position: { lat: 52.3583673, lng: 4.88109 },
+                map: map
+            });
+
+            var infoWindow5 = new google.maps.InfoWindow({
+                content: '<h3>Van Gogh Museum</h3>'
+            });
+
+            marker5.addListener('click', function () {
+                infoWindow5.open(map, marker5);
+            });
+        }
+
+
+    </script>
+
+
+    <link href="../css/properties.css" rel="stylesheet" />
+
+
+</head>
+<body class="aa-price-range">
+    <!-- Pre Loader -->
+    <div id="aa-preloader-area">
+        <div class="pulse"></div>
+    </div>
+    <!-- SCROLL TOP BUTTON -->
+    <a class="scrollToTop" href="#"><i class="fa fa-angle-double-up"></i></a>
+    <!-- END SCROLL TOP BUTTON -->
+    <!-- Start header section -->
+    <header id="aa-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="aa-header-area">
+                        <div class="row">
+                            <div class="col-md-6 col-sm-6 col-xs-6">
+                                <!--<div class="aa-header-left">
+                                    <div class="aa-telephone-no">
+                                        <span class="fa fa-phone"></span>
+                                        1-900-523-3564
+                                    </div>
+                                    <div class="aa-email hidden-xs">
+                                        <span class="fa fa-envelope-o"></span> info@markups.com
+                                    </div>
+                                </div>-->
+                            </div>
+                            <div class="col-md-6 col-sm-6 col-xs-6">
+                                <div class="aa-header-right">
+                                  
+                                    <a href="" class="aa-login" id="LogOut"><b>LogOut</b></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- End header section -->
+    <!-- Start menu section -->
+    <section id="aa-menu-area">
+        <nav class="navbar navbar-default main-navbar" role="navigation">
+            <div class="container">
+                <div class="navbar-header">
+                    <!-- FOR MOBILE VIEW COLLAPSED BUTTON -->
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <!-- LOGO -->
+                    <!-- Text based logo -->
+                    <a class="navbar-brand aa-logo"> Home <span>Property</span></a>
+                    <!-- Image based logo -->
+                    <!-- <a class="navbar-brand aa-logo-img" href="index.html"><img src="img/logo.png" alt="logo"></a> -->
+                </div>
+                <div id="navbar" class="navbar-collapse collapse">
+                    <ul id="top-menu" class="nav navbar-nav navbar-right aa-main-nav">
+                        <li><a href="" id="Pro" class="ui-link"><b>Properties</b></a></li>
+                        <li><a href="" id="Ua" class="ui-link"><b>User Area</b></a></li>
+                        <li><a href="" id="Ac" class="ui-link"><b>Apartments Comparison</b></a></li>
+                        <li><a href="" id="In" class="ui-link"><b>Info</b></a></li>
+                    </ul>
+                </div><!--/.nav-collapse -->
+            </div>
+        </nav>
+    </section>
+    <!-- End menu section -->
+    <!-- Start Proerty header  -->
+
+    <section id="aa-property-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="aa-property-header-inner">
+                        <h2>Properties Details</h2>
+                        <ol class="breadcrumb">
+                            <li><a href="#">HOME</a></li>
+                            <li class="active">APPARTMENT TITLE</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- End Proerty header  -->
+    <!-- Start Properties  -->
+    <section id="aa-properties">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="aa-properties-content">
+                        <!-- Start properties content body -->
+                        <div class="aa-properties-details">
+                            <div class="aa-properties-details-img">
+                                <img alt="img" id="img1">
+                            </div>
+                            <div class="aa-properties-info">
+                                <h2 id="name"></h2>
+                                <span class="aa-price" id="price"></span>
+                                <p id="p"></p>
+                                <h4>Propery Features</h4>
+                                <ul id="ul"></ul>
+                                <h4>Customer's reviews</h4>
+
+                                <div class="Rcontainer">
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="carousel slide" data-ride="carousel" id="quote-carousel">
+                                                <!-- Carousel Slides / Quotes -->
+                                                <div id="reviewsDiv" class="carousel-inner text-center">
+
+                                                </div>
+                                                <!-- Bottom Carousel Indicators -->
+                                                <!--<ol class="carousel-indicators">
+                                        <li data-target="#quote-carousel" data-slide-to="0" class="active">
+                                            <img class="img-responsive " src="https://s3.amazonaws.com/uifaces/faces/twitter/mantia/128.jpg" alt="">
+                                        </li>
+                                        <li data-target="#quote-carousel" data-slide-to="1">
+                                            <img class="img-responsive" src="https://s3.amazonaws.com/uifaces/faces/twitter/adhamdannaway/128.jpg" alt="">
+                                        </li>
+                                        <li data-target="#quote-carousel" data-slide-to="2">
+                                            <img class="img-responsive" src="https://s3.amazonaws.com/uifaces/faces/twitter/brad_frost/128.jpg" alt="">
+                                        </li>
+                                    </ol>-->
+                                                <!-- Carousel Buttons Next/Prev -->
+                                                <a data-slide="prev" href="#quote-carousel" class="left carousel-control"><i class="fa fa-chevron-left"></i></a>
+                                                <a data-slide="next" href="#quote-carousel" class="right carousel-control"><i class="fa fa-chevron-right"></i></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--add review-->
+                                <div  class="table-wrap" style="border:3px solid black">
+                                    <form id="addreviewform">
+                                        <table class="table myaccordion table-hover" id="addreviewtbl" style="text-align:center">
+                                            <tr>
+                                                <td><h2>add review</h2></td>
+                                                
+                                            </tr>
+                                            <tr>
+                                                <td><input required type="text" id="revierName" placeholder="type your name" /></td>
+                                            </tr>
+                                             
+                                             <tr>
+                                                 <td><textarea rows="4" required cols="50" id="description" placeholder="let us know ..."></textarea></td>
+                                             </tr>
+                                            <tr>
+                                                <td><input type="submit" id="sumbitreview" class="deletebtn" style="color:green"/></td>
+                                            </tr>
+                                        </table>
+                                    </form>
+                                </div>
+                                <h4>Property Map</h4>
+
+                            </div>
+                            <div id="map">
+
+
+                            </div>
+
+
+
+                        </div>
+                    </div>
+                </div>
+                <!-- Start properties sidebar -->
+                <div id="book_sidebar" class="col-md-4">
+                    <aside class="aa-properties-sidebar">
+                        <!-- Start Single properties sidebar -->
+                        <div class="aa-properties-single-sidebar">
+                            <h3>Properties Search</h3>
+                            <form id="booking_form" action="">
+                                <div class="aa-single-advance-search">
+                                    <input type="text" id="searched_cehckin" readonly>
+                                </div>
+                                <div class="aa-single-advance-search">
+                                    <input type="text" id="searched_cehckout" readonly>
+                                </div>
+                                <div class="aa-single-advance-search">
+                                    <input type="text" id="searched_price" readonly>
+                                </div>
+
+
+
+                                <div class="aa-single-advance-search">
+                                    <input type="submit" value="BOOK NOW !" class="aa-search-btn">
+                                </div>
+
+                            </form>
+                            <div class="aa-single-advance-search">
+                                <input type="submit" value="Add to comparison" class="aa-search-btn" id="btnComp" />
+                            </div>
+                            <div class="aa-single-advance-search">
+                                <input type="submit" value="move to comparison page" class="aa-search-btn" id="comPage" />
+                            </div>
+                        </div>
+
+                    </aside>
+                </div>
+                
+            </div>
+        </div>
+    </section>
+    <!-- / Properties  -->
+    <!-- Footer -->
+    <footer id="aa-footer">
+        <div class="container">
+           
+        </div>
+    </footer>
+    <!-- / Footer -->
+    <!-- jQuery library -->
+    <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script> -->
+    <script src="js/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.js"></script>
+    <!-- slick slider -->
+    <script type="text/javascript" src="js/slick.js"></script>
+    <!-- Price picker slider -->
+    <script type="text/javascript" src="js/nouislider.js"></script>
+    <!-- mixit slider -->
+    <script type="text/javascript" src="js/jquery.mixitup.js"></script>
+    <!-- Add fancyBox -->
+    <script type="text/javascript" src="js/jquery.fancybox.pack.js"></script>
+    <!-- Custom js -->
+    <script src="js/custom.js"></script>
+
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBuGqtxELsUIH26yH4scwiaT715o0MzUi4&callback=initMap">
+           
+    </script>
+</body>
+</html>

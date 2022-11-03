@@ -1,0 +1,388 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Home Property | Properties</title>
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="../img/favicon.ico" type="image/x-icon">
+
+    <!--Scripts-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="../Scripts/ajaxCalls.js"></script>
+
+    <link href="../css/theme-color/default-theme.css" rel="stylesheet" />
+    <link href="../css/bootstrap.css" rel="stylesheet" />
+    <link href="../css/font-awesome.css" rel="stylesheet" />
+    <link href="../css/jquery.fancybox.css" rel="stylesheet" />
+    <link href="../css/nouislider.css" rel="stylesheet" />
+    <link href="../css/slick.css" rel="stylesheet" />
+    <script src="../Scripts/nouislider.js"></script>
+
+
+    <script src="../js/jquery.min.js"></script>
+    <script src="../js/popper.js"></script>
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../js/main.js"></script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <script src="../Scripts/ajaxCalls.js"></script>
+
+    <!-- Google Font -->
+    <link href='https://fonts.googleapis.com/css?family=Vollkorn' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <link rel="stylesheet" href="https://demos.jquerymobile.com/1.4.2/css/themes/default/jquery.mobile-1.4.2.min.css">
+    <script src="https://demos.jquerymobile.com/1.4.2/js/jquery.js"></script>
+
+    <script src="https://demos.jquerymobile.com/1.4.2/js/jquery.mobile-1.4.2.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.css">
+
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.js"></script>
+
+    <!--<script type="text/javascript">
+        $('.range-thumb').popup();
+    </script>-->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.css">
+
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.js"></script>
+
+
+    <script>
+        $(document).ready(function () {
+            //If No apartments were saved for comparison
+            if (JSON.parse(localStorage.getItem("apartmentsToCompare")) == null || JSON.parse(localStorage.getItem("apartmentsToCompare")).length == 0) {
+                buttons();
+                swal({
+                    title: "You did not saved any apartments to compare",
+                    text: "",
+                    icon: "error",
+                    buttons: {
+
+                        confirm: "Add Apartments",
+                    },
+                }).then(function () {
+                    window.location = "properties.html";
+                });
+                $('#table').hide();
+            }
+            else {
+                buttons();
+                Do();
+                render();
+            }
+        });
+
+        function buttons() { //Defining the buttons for redirecting between pages
+
+            $("#Ua").click(function () {
+                location.href = 'userArea.html';
+                return false;
+            });
+            $("#Pro").click(function () {
+                location.href = 'properties.html';
+                return false;
+            });
+            $("#Ac").click(function () {
+                location.href = 'comparison.html';
+                return false;
+            });
+            $("#LogOut").click(function () {
+                var myWindow = window.open("index.html", "ModalPopUp", "width=1000,height=1000");
+                var win = window.close();
+                return false;
+            });
+            $("#In").click(function () {
+                location.href = 'info.html';
+                return false;
+            });
+        }
+
+        function directtoPage(id) {//Redirect to the property window
+            localStorage.setItem("id", JSON.stringify(id))
+            var myWindow = window.open("properties-detail.html", "width=700,height=500");
+        }
+
+        //Deletes an apartment from the comparison table
+        function deleteCol(id) {
+            let apartmentsToCompare = JSON.parse(localStorage.getItem("apartmentsToCompare"));
+            swal("Deleted!", "", "success");
+            for (let i = 0; i < apartmentsToCompare.length; i++) {
+                if (apartmentsToCompare[i].Id == id) {
+                    apartmentsToCompare.splice(i, 1);
+                    apartmentsToCompCheckIn.splice(i, 1);
+                    apartmentsToCompCheckOut.splice(i, 1);
+                    localStorage.setItem("apartmentsToCompare", JSON.stringify(apartmentsToCompare))
+                    localStorage.setItem("apartmentsToCompCheckIn", JSON.stringify(apartmentsToCompCheckIn))
+                    localStorage.setItem("apartmentsToCompCheckOut", JSON.stringify(apartmentsToCompCheckOut))
+                    Do();
+                    render();
+                    return;
+                }
+            }
+        }
+        //Renders all the apartments for the comparison table
+        function render() {
+            var str1 = "";
+            var str2 = "";
+            var str3 = "";
+            var str4 = "";
+            var str5 = "";
+            var str6 = "";
+            var str7 = "";
+            var str8 = "";
+            str2 += " <th class='hide'></th>";
+            str2 += "<th class='bg-blue'> Apartment Name</th>";
+            str1 += "<td><span class='txt - l'>Cost</span></td>";
+            str3 += "<td><span class='txt - l'>Review Score</span></td>";
+            str4 += "<td><span class='txt - l'>Rooms</span></td>";
+            str5 += "<td><span class='txt - l'>Distance From Center (KM)</span></td>";
+            str6 += "<td><span class='txt - l'>Check In</span></td>";
+            str7 += "<td><span class='txt - l'>Check Out</span></td>";
+            str8 += "<td><span class='txt - l'>Options</span></td>";
+
+            for (let i = 0; i < apartments.length; i++) {
+                str2 += "<th class='bg - red'>" + apartments[i].Name + "</th>";
+                str1 += "<td><span>$</span> <span>" + apartments[i].Price + "</span></td >";
+                str3 += "<td><span>" + apartments[i].ReviewScoresRating + "</span></td >";
+                str4 += "<td><span>" + apartments[i].NumOfBedrooms + "</span></td >";
+                str5 += "<td><span>" + apartments[i].DistanceFromCenter.toFixed(2) + "</span></td >";
+                str6 += "<td><span>" + apartmentsToCompCheckIn[i] + "</span></td >";
+                str7 += "<td><span>" + apartmentsToCompCheckOut[i] + "</span></td >";
+                str8 += "<td><span>" + "<input type='submit' value='Delete' data-id='" + apartments[i].Id + "'onclick='deleteCol(this.dataset.id)' class='aa - search - btn' style='color:red'/> <input type='submit' value='Book' class='aa - search - btn' style='color:green' data-id='" + apartments[i].Id + "' onclick='addorder(this.dataset.id)'/> <input type='submit' value='Property Page' class='aa - search - btn' data-id='" + apartments[i].Id + "' onclick='directtoPage(this.dataset.id)'/> " + "</span></td >";
+            }
+
+            var costTr = document.getElementById("costTr");
+            costTr.innerHTML = str1;
+            var ApartmentsName = document.getElementById("ApartmentsName");
+            ApartmentsName.innerHTML = str2;
+            var reviewTr = document.getElementById("reviewTr");
+            reviewTr.innerHTML = str3;
+            var roomsTr = document.getElementById("roomsTr");
+            roomsTr.innerHTML = str4;
+            var distanceTr = document.getElementById("distanceTr");
+            distanceTr.innerHTML = str5;
+            var checkInTr = document.getElementById("checkInTr");
+            checkInTr.innerHTML = str6;
+            var checkOutTr = document.getElementById("checkOutTr");
+            checkOutTr.innerHTML = str7;
+            var buttons = document.getElementById("buttons");
+            buttons.innerHTML = str8;
+        }
+
+        function Do() { //Initiate the arrays from LocalStorage
+            apartments = JSON.parse(localStorage.getItem("apartmentsToCompare"));
+            apartmentsToCompCheckIn = JSON.parse(localStorage.getItem("apartmentsToCompCheckIn"));
+            apartmentsToCompCheckOut = JSON.parse(localStorage.getItem("apartmentsToCompCheckOut"));
+        }
+
+        function addorder(id) { //Adding the apartment from the comparison table to order
+
+            apartmentsToCompare = JSON.parse(localStorage.getItem("apartmentsToCompare"));
+            apartmentsToCompCheckIn = JSON.parse(localStorage.getItem("apartmentsToCompCheckIn"));
+            apartmentsToCompCheckOut = JSON.parse(localStorage.getItem("apartmentsToCompCheckOut"));
+
+            for (let i = 0; i < apartmentsToCompare.length; i++) {
+
+                if (apartmentsToCompare[i].Id == id) {
+                    email = localStorage.getItem("userEmail");
+                    aptId = apartmentsToCompare[i].Id;
+                    name = apartmentsToCompare[i].Name;
+                    since = apartmentsToCompCheckIn[i];
+                    until = apartmentsToCompCheckOut[i];
+                }
+            }
+
+            let order = {
+                Mail: email,
+                ApartmentName: name,
+                ApartmentId: aptId,
+                Since: since,
+                Until: until,
+
+            }
+            ajaxCall("POST", "../api/Orders/insertorder", JSON.stringify(order), addordersucsses, error)
+            return false;
+        }
+
+        function addordersucsses(flag) {
+            if (flag == 1) {
+                swal("Sorry!", "There is another book in this range of time", "error");
+            }
+            else {
+                swal("Order added!", "", "success");
+            }
+
+        }
+        function error(data) {
+            alert('error');
+        }
+
+
+    </script>
+
+    <!--<link href="../css/range.css" rel="stylesheet" />-->
+    <link href="../css/properties.css" rel="stylesheet" />
+    <link href='https://fonts.googleapis.com/css?family=Roboto:400,100,300,700' rel='stylesheet' type='text/css'>
+
+    <!--<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">-->
+    <!--<link rel="stylesheet" href="../css/style1.css">-->
+</head>
+
+<body class="aa-price-range">
+    <!-- Pre Loader -->
+    <div id="aa-preloader-area">
+        <div class="pulse"></div>
+    </div>
+    <!-- SCROLL TOP BUTTON -->
+    <a class="scrollToTop" href="#"><i class="fa fa-angle-double-up"></i></a>
+    <!-- END SCROLL TOP BUTTON -->
+    <!-- Start header section -->
+    <header id="aa-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="aa-header-area">
+                        <div class="row">
+                            <div class="col-md-6 col-sm-6 col-xs-6">
+                                <!--<div class="aa-header-left">
+                                    <div class="aa-telephone-no">
+                                        <span class="fa fa-phone"></span>
+                                        1-900-523-3564
+                                    </div>
+                                    <div class="aa-email hidden-xs">
+                                        <span class="fa fa-envelope-o"></span> info@markups.com
+                                    </div>
+                                </div>-->
+                            </div>
+                            <div class="col-md-6 col-sm-6 col-xs-6">
+                                <div class="aa-header-right">
+
+                                    <a href="" class="aa-login" id="LogOut"><b>LogOut</b></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div id="navbar" class="navbar-collapse collapse">
+        <ul id="top-menu" class="nav navbar-nav navbar-right aa-main-nav"></ul>
+    </div>
+
+    <!-- End header section -->
+    <!-- Start menu section -->
+    <section id="aa-menu-area">
+        <nav class="navbar navbar-default main-navbar" role="navigation">
+            <div class="container">
+                <div class="navbar-header">
+                    <!-- FOR MOBILE VIEW COLLAPSED BUTTON -->
+
+                    <!-- LOGO -->
+                    <!-- Text based logo -->
+                    <a class="navbar-brand aa-logo"> Home <span>Property</span></a>
+                    <!-- Image based logo -->
+                    <!-- <a class="navbar-brand aa-logo-img" href="index.html"><img src="img/logo.png" alt="logo"></a> -->
+                </div>
+                <div id="navbar" class="navbar-collapse collapse">
+                    <ul id="top-menu" class="nav navbar-nav navbar-right aa-main-nav">
+                        <li><a id="Pro" class="ui-link"><b>Properties</b></a></li>
+                        <li><a href="" id="Ua" class="ui-link"><b>User Area</b></a></li>
+                        <li><a href="" id="Ac" class="ui-link"><b>Apartments Comparison</b></a></li>
+                        <li><a href="" id="In" class="ui-link"><b>Info</b></a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </section>
+
+    <!-- End menu section -->
+    <!-- Start Proerty header  -->
+
+    <section id="aa-property-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="aa-property-header-inner">
+                        <h2>Comparison Table</h2>
+                        <ol class="breadcrumb">
+                            <li><a href="#">HOME</a></li>
+                            <li class="active">Comparison Table</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+    <br>
+
+    <div class="col-lg-12">
+        <div class="table-responsive">
+            <br />
+            <br />
+
+            <br />
+            <br />
+            <table id="table" class="table">
+                <thead>
+                    <tr id="ApartmentsName"></tr>
+                </thead>
+                <tbody>
+                    <tr id="costTr"></tr>
+
+
+
+                    <tr id="reviewTr"></tr>
+
+                    <tr id="roomsTr"></tr>
+                    <tr id="distanceTr"></tr>
+
+
+                    <tr id="checkInTr"></tr>
+                    <tr id="checkOutTr"></tr>
+                    <tr id="buttons"></tr>
+
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <!-- jQuery library -->
+    <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script> -->
+    <script src="../js/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="../js/bootstrap.js"></script>
+    <!-- slick slider -->
+    <script type="text/javascript" src="../js/slick.js"></script>
+    <!-- Price picker slider -->
+    <script type="text/javascript" src="../js/nouislider.js"></script>
+    <!-- mixit slider -->
+    <script type="text/javascript" src="../js/jquery.mixitup.js"></script>
+    <!-- Add fancyBox -->
+    <script type="text/javascript" src="../js/jquery.fancybox.pack.js"></script>
+    <!-- Custom js -->
+    <script src="../js/custom.js"></script>
+
+</body>
+</html>
+
+
